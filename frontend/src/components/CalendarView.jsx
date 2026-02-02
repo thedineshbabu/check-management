@@ -2,10 +2,11 @@
  * Calendar View Component
  * Displays calendar with month/week view
  * Highlights dates with checks and selected date
+ * Shows incoming (green) and outgoing (red) indicators
  */
 
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addDays, subDays } from 'date-fns';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import logger from '../utils/logger';
 import './CalendarView.css';
 
@@ -15,8 +16,10 @@ import './CalendarView.css';
  * @param {string} viewMode - 'month' or 'week'
  * @param {Function} onDateSelect - Callback when date is selected
  * @param {Object} dashboardData - Dashboard data for highlighting dates
+ * @param {Array} monthChecks - Array of checks for the visible month
+ * @param {Function} onMonthChange - Callback when month/week changes (to load checks)
  */
-const CalendarView = ({ selectedDate, viewMode, onDateSelect, dashboardData }) => {
+const CalendarView = ({ selectedDate, viewMode, onDateSelect, dashboardData, monthChecks = [], onMonthChange }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   /**
@@ -37,16 +40,52 @@ const CalendarView = ({ selectedDate, viewMode, onDateSelect, dashboardData }) =
   };
 
   /**
-   * Check if date has checks
-   * Determines if date should be highlighted
-   * @param {Date} date - Date to check
-   * @returns {boolean} True if date has checks
+   * Build a map of dates to check types
+   * Groups checks by date and categorizes as incoming/outgoing
    */
-  const hasChecks = (date) => {
-    if (!dashboardData) return false;
+  const checksByDate = useMemo(() => {
+    const map = {};
+    if (!monthChecks || monthChecks.length === 0) return map;
+
+    monthChecks.forEach(check => {
+      const dateStr = check.date?.split('T')[0]; // Handle ISO date strings
+      if (!dateStr) return;
+      
+      if (!map[dateStr]) {
+        map[dateStr] = { incoming: false, outgoing: false };
+      }
+      
+      if (check.type === 'incoming') {
+        map[dateStr].incoming = true;
+      } else if (check.type === 'outgoing') {
+        map[dateStr].outgoing = true;
+      }
+    });
+
+    return map;
+  }, [monthChecks]);
+
+  /**
+   * Get check info for a specific date
+   * @param {Date} date - Date to check
+   * @returns {Object} Object with incoming and outgoing booleans
+   */
+  const getCheckInfo = (date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return dashboardData.checks?.total > 0 && dashboardData.date === dateStr;
+    return checksByDate[dateStr] || { incoming: false, outgoing: false };
   };
+
+  /**
+   * Notify parent when month/week changes
+   */
+  useEffect(() => {
+    if (onMonthChange) {
+      const dates = getDatesToDisplay();
+      const start = format(dates[0], 'yyyy-MM-dd');
+      const end = format(dates[dates.length - 1], 'yyyy-MM-dd');
+      onMonthChange(start, end);
+    }
+  }, [currentDate, viewMode]);
 
   /**
    * Navigate to previous period
@@ -117,24 +156,43 @@ const CalendarView = ({ selectedDate, viewMode, onDateSelect, dashboardData }) =
           {dates.map((date, index) => {
             const isSelected = isSameDay(date, selectedDate);
             const isCurrentDay = isToday(date);
-            const hasChecksOnDate = hasChecks(date);
+            const checkInfo = getCheckInfo(date);
+            const hasAnyChecks = checkInfo.incoming || checkInfo.outgoing;
 
             return (
               <div
                 key={index}
-                className={`calendar-day ${isSelected ? 'selected' : ''} ${isCurrentDay ? 'today' : ''} ${hasChecksOnDate ? 'has-checks' : ''}`}
+                className={`calendar-day ${isSelected ? 'selected' : ''} ${isCurrentDay ? 'today' : ''} ${hasAnyChecks ? 'has-checks' : ''}`}
                 onClick={() => onDateSelect(date)}
               >
                 <span className="day-number">{format(date, 'd')}</span>
-                {hasChecksOnDate && <span className="check-indicator">•</span>}
+                {hasAnyChecks && (
+                  <div className="check-indicators">
+                    {checkInfo.incoming && (
+                      <span className="check-dot incoming" title="Incoming check(s)">▼</span>
+                    )}
+                    {checkInfo.outgoing && (
+                      <span className="check-dot outgoing" title="Outgoing check(s)">▲</span>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
+      </div>
+
+      {/* Legend */}
+      <div className="calendar-legend">
+        <span className="legend-item">
+          <span className="check-dot incoming">▼</span> Incoming
+        </span>
+        <span className="legend-item">
+          <span className="check-dot outgoing">▲</span> Outgoing
+        </span>
       </div>
     </div>
   );
 };
 
 export default CalendarView;
-

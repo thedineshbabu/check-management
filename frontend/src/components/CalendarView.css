@@ -72,6 +72,7 @@
   transition: all 0.2s ease;
   position: relative;
   background: var(--bg-tertiary);
+  min-height: 40px;
 }
 
 .calendar-day:hover {
@@ -91,18 +92,12 @@
   color: white;
 }
 
-.calendar-day.has-checks::after {
-  content: '';
-  position: absolute;
-  bottom: 4px;
-  width: 6px;
-  height: 6px;
-  background: var(--accent);
-  border-radius: 50%;
+.calendar-day.has-checks {
+  border-color: var(--accent);
 }
 
-.calendar-day.selected.has-checks::after {
-  background: white;
+.calendar-day.selected.has-checks {
+  border-color: var(--primary);
 }
 
 .day-number {
@@ -110,15 +105,82 @@
   font-weight: 500;
 }
 
-.check-indicator {
+/* Check indicators container */
+.check-indicators {
+  display: flex;
+  gap: 2px;
   position: absolute;
-  top: 2px;
-  right: 2px;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Individual check dots */
+.check-dot {
   font-size: 0.5rem;
-  color: var(--accent);
+  line-height: 1;
 }
 
-.calendar-day.selected .check-indicator {
+.check-dot.incoming {
+  color: #10b981; /* Green for incoming/money in */
+}
+
+.check-dot.outgoing {
+  color: #ef4444; /* Red for outgoing/money out */
+}
+
+/* Adjust colors when day is selected */
+.calendar-day.selected .check-dot.incoming,
+.calendar-day.selected .check-dot.outgoing {
   color: white;
+  opacity: 0.9;
 }
 
+/* Calendar legend */
+.calendar-legend {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.legend-item .check-dot {
+  font-size: 0.625rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .calendar-day {
+    min-height: 35px;
+  }
+
+  .day-number {
+    font-size: 0.75rem;
+  }
+
+  .check-indicators {
+    bottom: 1px;
+  }
+
+  .check-dot {
+    font-size: 0.4rem;
+  }
+
+  .calendar-legend {
+    gap: var(--spacing-md);
+  }
+
+  .legend-item {
+    font-size: 0.65rem;
+  }
+}

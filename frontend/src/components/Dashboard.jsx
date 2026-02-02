@@ -4,11 +4,11 @@
  * Shows checks and balances for selected date
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { dashboardAPI, accountAPI } from '../services/api';
+import { dashboardAPI, accountAPI, checkAPI } from '../services/api';
 import logger from '../utils/logger';
 import CalendarView from './CalendarView';
 import BalanceCard from './BalanceCard';
@@ -27,10 +27,12 @@ const Dashboard = () => {
   const [viewMode, setViewMode] = useState('month'); // 'month' or 'week'
   const [dashboardData, setDashboardData] = useState(null);
   const [accounts, setAccounts] = useState([]);
+  const [monthChecks, setMonthChecks] = useState([]); // Checks for calendar indicators
   const [loading, setLoading] = useState(true);
   const [showCheckForm, setShowCheckForm] = useState(false);
   const [editingCheck, setEditingCheck] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0); // Key to force re-render
+  const [currentDateRange, setCurrentDateRange] = useState({ start: null, end: null });
   const { logout, user, isAdmin } = useAuth();
   const navigate = useNavigate();
 
@@ -66,11 +68,48 @@ const Dashboard = () => {
   };
 
   /**
+   * Load checks for the visible date range (for calendar indicators)
+   * Fetches all checks within the month/week view
+   */
+  const loadMonthChecks = useCallback(async (startDate, endDate) => {
+    try {
+      logger.info(`Loading checks for date range: ${startDate} to ${endDate}`);
+      const checks = await checkAPI.getByDateRange(startDate, endDate);
+      setMonthChecks(checks);
+      logger.info(`Loaded ${checks.length} checks for calendar`);
+    } catch (error) {
+      logger.error('Error loading month checks:', error);
+      setMonthChecks([]);
+    }
+  }, []);
+
+  /**
+   * Handle calendar month/week change
+   * Loads checks for the new visible date range
+   */
+  const handleMonthChange = useCallback((startDate, endDate) => {
+    // Only reload if date range changed
+    if (currentDateRange.start !== startDate || currentDateRange.end !== endDate) {
+      setCurrentDateRange({ start: startDate, end: endDate });
+      loadMonthChecks(startDate, endDate);
+    }
+  }, [currentDateRange, loadMonthChecks]);
+
+  /**
    * Load data when component mounts or date changes
    */
   useEffect(() => {
     loadDashboardData(selectedDate);
   }, [selectedDate]);
+
+  /**
+   * Reload month checks when a check is added/edited/deleted
+   */
+  useEffect(() => {
+    if (currentDateRange.start && currentDateRange.end) {
+      loadMonthChecks(currentDateRange.start, currentDateRange.end);
+    }
+  }, [refreshKey]);
 
   /**
    * Handle date selection from calendar
@@ -192,6 +231,8 @@ const Dashboard = () => {
             viewMode={viewMode}
             onDateSelect={handleDateSelect}
             dashboardData={dashboardData}
+            monthChecks={monthChecks}
+            onMonthChange={handleMonthChange}
           />
 
           <div className="dashboard-balance-section">

@@ -263,11 +263,22 @@ export const accountAPI = {
 export const checkAPI = {
   /**
    * Get checks with optional filters
-   * @param {Object} filters - Filter options (date, accountId, type)
+   * @param {Object} filters - Filter options (date, accountId, type, startDate, endDate)
    * @returns {Promise} Array of checks
    */
   getAll: async (filters = {}) => {
     const response = await api.get('/checks', { params: filters });
+    return response.data;
+  },
+
+  /**
+   * Get checks for a date range (for calendar indicators)
+   * @param {string} startDate - Start date in YYYY-MM-DD format
+   * @param {string} endDate - End date in YYYY-MM-DD format
+   * @returns {Promise} Array of checks
+   */
+  getByDateRange: async (startDate, endDate) => {
+    const response = await api.get('/checks', { params: { startDate, endDate } });
     return response.data;
   },
 
