@@ -301,6 +301,25 @@ The frontend will be running on `http://localhost:3000`
 - Responsive design with CSS variables
 - Modern UI with smooth animations
 
+## Deployment
+
+This application is designed to be deployed across multiple platforms:
+- **Frontend**: Vercel
+- **Backend**: Render
+- **Database**: Supabase (PostgreSQL)
+
+For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
+### Quick Deployment Steps
+
+1. **Set up Supabase database** and run migrations
+2. **Deploy backend to Render** with environment variables configured
+3. **Deploy frontend to Vercel** with `VITE_API_URL` pointing to backend
+4. **Update backend CORS_ORIGIN** with frontend URL
+5. **Test end-to-end** and create admin user
+
+See [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) for a step-by-step checklist.
+
 ## License
 
 ISC

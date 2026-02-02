@@ -60,3 +60,6 @@ coverage/
 *.key
 *.cert
 
+# Deployment config with sensitive data (optional - remove if you want to track it)
+# SUPABASE_CONFIG.md
+

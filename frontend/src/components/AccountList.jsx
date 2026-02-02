@@ -4,7 +4,7 @@
  * Shows account balances and low balance warnings
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { accountAPI } from '../services/api';
 import logger from '../utils/logger';
 import './AccountList.css';
@@ -50,7 +50,10 @@ const AccountList = ({ accounts, balanceData, onRefresh }) => {
         low_balance_threshold: 0,
         opening_balance: 0
       });
-      onRefresh();
+      
+      // Refresh dashboard data to update balances immediately
+      await onRefresh();
+      logger.info('Account data refreshed successfully');
     } catch (error) {
       logger.error('Error saving account:', error);
       alert(error.response?.data?.error || 'Failed to save account');
@@ -86,7 +89,10 @@ const AccountList = ({ accounts, balanceData, onRefresh }) => {
     try {
       logger.info(`Deleting account: ${accountId}`);
       await accountAPI.delete(accountId);
-      onRefresh();
+      
+      // Refresh dashboard data to update balances immediately
+      await onRefresh();
+      logger.info('Account data refreshed after deletion');
     } catch (error) {
       logger.error('Error deleting account:', error);
       alert('Failed to delete account');
@@ -99,9 +105,14 @@ const AccountList = ({ accounts, balanceData, onRefresh }) => {
    * @returns {number} Account balance
    */
   const getAccountBalance = (accountId) => {
-    if (!balanceData) return 0;
+    if (!balanceData || !balanceData.account_balances) {
+      logger.debug(`No balance data available for account: ${accountId}`);
+      return 0;
+    }
     const account = balanceData.account_balances.find(acc => acc.account_id === accountId);
-    return account ? account.balance : 0;
+    const balance = account ? account.balance : 0;
+    logger.debug(`Balance for account ${accountId}: ${balance}`);
+    return balance;
   };
 
   /**
@@ -125,6 +136,15 @@ const AccountList = ({ accounts, balanceData, onRefresh }) => {
       currency: 'USD'
     }).format(amount);
   };
+
+  /**
+   * Log balance data changes for debugging
+   */
+  useEffect(() => {
+    if (balanceData) {
+      logger.debug('Balance data updated:', balanceData);
+    }
+  }, [balanceData]);
 
   return (
     <div className="account-list">

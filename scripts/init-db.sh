@@ -33,6 +33,7 @@ MIGRATIONS_DIR="../database/migrations"
 MIGRATION_001="$MIGRATIONS_DIR/001_initial_schema.sql"
 MIGRATION_002="$MIGRATIONS_DIR/002_add_opening_balance.sql"
 MIGRATION_003="$MIGRATIONS_DIR/003_admin_and_registration_codes.sql"
+MIGRATION_004="$MIGRATIONS_DIR/004_add_user_expiry.sql"
 
 # Check if migration files exist
 if [ ! -f "$MIGRATION_001" ]; then
@@ -69,9 +70,19 @@ if [ -f "$MIGRATION_003" ]; then
     fi
 fi
 
+# Run fourth migration if it exists
+if [ -f "$MIGRATION_004" ]; then
+    echo -e "${YELLOW}📋 Running migration: 004_add_user_expiry.sql${NC}"
+    docker exec -i check-management-postgres psql -U "$DB_USER" -d "$DB_NAME" < "$MIGRATION_004"
+    
+    if [ $? -ne 0 ]; then
+        echo -e "${YELLOW}⚠️  Warning: Migration 004 failed, but database may still be usable${NC}"
+    fi
+fi
+
 echo -e "${GREEN}✅ Database initialized successfully!${NC}"
 echo -e "${GREEN}📊 Tables created: users, bank_accounts, checks, registration_codes${NC}"
-echo -e "${GREEN}📊 Columns added: opening_balance to bank_accounts, is_admin to users${NC}"
+echo -e "${GREEN}📊 Columns added: opening_balance to bank_accounts, is_admin to users, expiry_time to users${NC}"
 echo ""
 echo -e "${YELLOW}ℹ️  NOTE: To create an admin user, use the admin dashboard after registering a user.${NC}"
 echo -e "${YELLOW}   Or manually update a user: UPDATE users SET is_admin = TRUE WHERE email = 'your-email@example.com';${NC}"

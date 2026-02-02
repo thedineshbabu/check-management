@@ -39,7 +39,7 @@ export const findUserByEmail = async (email) => {
   try {
     logger.debug(`Finding user by email: ${email}`);
     const result = await query(
-      'SELECT id, email, password_hash, is_admin, created_at FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, is_admin, expiry_time, created_at FROM users WHERE email = $1',
       [email]
     );
     
@@ -66,7 +66,7 @@ export const findUserById = async (userId) => {
   try {
     logger.debug(`Finding user by ID: ${userId}`);
     const result = await query(
-      'SELECT id, email, is_admin, created_at FROM users WHERE id = $1',
+      'SELECT id, email, is_admin, expiry_time, created_at FROM users WHERE id = $1',
       [userId]
     );
     
@@ -85,14 +85,14 @@ export const findUserById = async (userId) => {
 /**
  * Get all users
  * Retrieves all users with optional filters
- * @param {Object} filters - Filter options (isAdmin)
+ * @param {Object} filters - Filter options (isAdmin, expired)
  * @returns {Promise<Array>} Array of user objects
  */
 export const getAllUsers = async (filters = {}) => {
   try {
     logger.debug('Fetching all users');
     
-    let queryString = 'SELECT id, email, is_admin, created_at FROM users WHERE 1=1';
+    let queryString = 'SELECT id, email, is_admin, expiry_time, created_at FROM users WHERE 1=1';
     const params = [];
     let paramIndex = 1;
     
@@ -103,6 +103,15 @@ export const getAllUsers = async (filters = {}) => {
       paramIndex++;
     }
     
+    // Filter by expired status
+    if (filters.expired !== undefined) {
+      if (filters.expired) {
+        queryString += ` AND expiry_time IS NOT NULL AND expiry_time < CURRENT_TIMESTAMP`;
+      } else {
+        queryString += ` AND (expiry_time IS NULL OR expiry_time >= CURRENT_TIMESTAMP)`;
+      }
+    }
+    
     queryString += ' ORDER BY created_at DESC';
     
     const result = await query(queryString, params);
@@ -110,6 +119,50 @@ export const getAllUsers = async (filters = {}) => {
     return result.rows;
   } catch (error) {
     logger.error('Error fetching users:', error);
+    throw error;
+  }
+};
+
+/**
+ * Check if user account is expired
+ * Verifies if user's expiry time has passed
+ * @param {Object} user - User object with expiry_time
+ * @returns {boolean} True if user is expired
+ */
+export const isUserExpired = (user) => {
+  if (!user.expiry_time) {
+    return false; // No expiry means permanent access
+  }
+  const now = new Date();
+  const expiryTime = new Date(user.expiry_time);
+  return now > expiryTime;
+};
+
+/**
+ * Update user expiry time
+ * Sets or updates the expiry time for a user account
+ * @param {string} userId - User UUID
+ * @param {Date|null} expiryTime - New expiry timestamp (null for no expiry)
+ * @returns {Promise<Object>} Updated user object
+ */
+export const updateUserExpiry = async (userId, expiryTime) => {
+  try {
+    logger.info(`Updating expiry time for user: ${userId}`);
+    
+    const result = await query(
+      'UPDATE users SET expiry_time = $1 WHERE id = $2 RETURNING id, email, is_admin, expiry_time, created_at',
+      [expiryTime, userId]
+    );
+    
+    if (result.rows.length === 0) {
+      logger.warn(`User not found for expiry update: ${userId}`);
+      return null;
+    }
+    
+    logger.info(`User expiry updated successfully: ${userId}`);
+    return result.rows[0];
+  } catch (error) {
+    logger.error('Error updating user expiry:', error);
     throw error;
   }
 };

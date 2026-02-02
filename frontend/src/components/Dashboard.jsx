@@ -30,6 +30,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showCheckForm, setShowCheckForm] = useState(false);
   const [editingCheck, setEditingCheck] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0); // Key to force re-render
   const { logout, user, isAdmin } = useAuth();
   const navigate = useNavigate();
 
@@ -43,14 +44,20 @@ const Dashboard = () => {
       const dateStr = format(date, 'yyyy-MM-dd');
       logger.info(`Loading dashboard data for date: ${dateStr}`);
       
-      const [summary, accountsData] = await Promise.all([
-        dashboardAPI.getSummary(dateStr),
-        accountAPI.getAll()
-      ]);
+      // Load accounts first to ensure balance calculation uses latest account data
+      const accountsData = await accountAPI.getAll();
+      logger.info(`Loaded ${accountsData.length} accounts`);
       
-      setDashboardData(summary);
+      // Then load summary which calculates balances using the latest account data
+      const summary = await dashboardAPI.getSummary(dateStr);
+      logger.info('Dashboard summary loaded with balance data');
+      
+      // Update state with fresh data
       setAccounts(accountsData);
-      logger.info('Dashboard data loaded successfully');
+      setDashboardData(summary);
+      // Increment refresh key to force AccountList re-render
+      setRefreshKey(prev => prev + 1);
+      logger.info('Dashboard data loaded successfully - accounts and balances updated');
     } catch (error) {
       logger.error('Error loading dashboard data:', error);
     } finally {
@@ -100,6 +107,24 @@ const Dashboard = () => {
    */
   const handleDeleteCheck = () => {
     loadDashboardData(selectedDate);
+  };
+
+  /**
+   * Handle account refresh
+   * Reloads dashboard data and accounts after account creation/update
+   * This ensures balances are recalculated immediately
+   */
+  const handleAccountRefresh = async () => {
+    try {
+      logger.info('Refreshing dashboard data after account update');
+      // Force a fresh reload of all data
+      await loadDashboardData(selectedDate);
+      // Small delay to ensure state updates propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
+      logger.info('Dashboard data refreshed successfully');
+    } catch (error) {
+      logger.error('Error refreshing dashboard data:', error);
+    }
   };
 
   /**
@@ -188,9 +213,10 @@ const Dashboard = () => {
 
         <div className="dashboard-sidebar">
           <AccountList 
+            key={`account-list-${refreshKey}-${dashboardData?.date || 'default'}-${accounts.length}`}
             accounts={accounts}
             balanceData={dashboardData?.balance}
-            onRefresh={loadDashboardData}
+            onRefresh={handleAccountRefresh}
           />
         </div>
       </div>

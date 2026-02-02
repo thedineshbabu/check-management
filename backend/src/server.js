@@ -21,7 +21,14 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors()); // Enable CORS for frontend communication
+// Configure CORS with environment variable support for production
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || '*', // Allow all origins in development, specific origin in production
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+app.use(cors(corsOptions)); // Enable CORS for frontend communication
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded request bodies
 

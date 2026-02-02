@@ -22,6 +22,12 @@ const UserManagement = () => {
   const [defaultPassword, setDefaultPassword] = useState('DefaultPassword123!');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [resetPasswordResult, setResetPasswordResult] = useState(null);
+  const [showExpiryModal, setShowExpiryModal] = useState(false);
+  const [expiryUserId, setExpiryUserId] = useState(null);
+  const [expiryHours, setExpiryHours] = useState(720); // Default 30 days
+  const [expiryDate, setExpiryDate] = useState('');
+  const [expiryMode, setExpiryMode] = useState('hours'); // 'hours', 'date', 'remove'
+  const [expiryResult, setExpiryResult] = useState(null);
 
   /**
    * Load users from API
@@ -137,6 +143,67 @@ const UserManagement = () => {
   };
 
   /**
+   * Format date and time for display
+   * @param {string} dateString - ISO date string
+   * @returns {string} Formatted date and time
+   */
+  const formatDateTime = (dateString) => {
+    if (!dateString) return 'Never';
+    return new Date(dateString).toLocaleString();
+  };
+
+  /**
+   * Check if user is expired
+   * @param {Object} user - User object
+   * @returns {boolean} True if user is expired
+   */
+  const isUserExpired = (user) => {
+    if (!user.expiry_time) return false;
+    return new Date() > new Date(user.expiry_time);
+  };
+
+  /**
+   * Handle set user expiry
+   * Sets or updates user account expiry time
+   */
+  const handleSetExpiry = async () => {
+    try {
+      setError('');
+      logger.info(`Setting expiry for user: ${expiryUserId}`);
+
+      let options = {};
+      if (expiryMode === 'remove') {
+        options.removeExpiry = true;
+      } else if (expiryMode === 'date') {
+        options.expiryDate = expiryDate;
+      } else {
+        options.expiryHours = expiryHours;
+      }
+
+      const response = await adminAPI.setUserExpiry(expiryUserId, options);
+      setExpiryResult({
+        success: true,
+        user: response.user
+      });
+      logger.info('User expiry set successfully');
+      
+      // Reload users after setting expiry
+      setTimeout(() => {
+        loadUsers();
+        setShowExpiryModal(false);
+        setExpiryResult(null);
+        setExpiryUserId(null);
+      }, 3000);
+    } catch (err) {
+      logger.error('Error setting user expiry:', err);
+      setExpiryResult({
+        success: false,
+        error: err.response?.data?.error || 'Failed to set user expiry'
+      });
+    }
+  };
+
+  /**
    * Load users when component mounts or filter changes
    */
   useEffect(() => {
@@ -180,6 +247,8 @@ const UserManagement = () => {
               <tr>
                 <th>Email</th>
                 <th>Role</th>
+                <th>Expiry</th>
+                <th>Status</th>
                 <th>Created</th>
                 <th>Actions</th>
               </tr>
@@ -187,48 +256,78 @@ const UserManagement = () => {
             <tbody>
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="no-users">
+                  <td colSpan="6" className="no-users">
                     No users found
                   </td>
                 </tr>
               ) : (
-                users.map((user) => (
-                  <tr key={user.id}>
-                    <td>{user.email}</td>
-                    <td>
-                      <span className={`role-badge ${user.is_admin ? 'admin' : 'regular'}`}>
-                        {user.is_admin ? 'Admin' : 'User'}
-                      </span>
-                    </td>
-                    <td>{formatDate(user.created_at)}</td>
-                    <td>
-                      <div className="action-buttons">
-                        <button
-                          className="btn btn-sm btn-primary"
-                          onClick={() => {
-                            setResetPasswordUserId(user.id);
-                            setShowPasswordModal(true);
-                            setResetPasswordResult(null);
-                          }}
-                        >
-                          Reset Password
-                        </button>
-                        <button
-                          className={`btn btn-sm ${user.is_admin ? 'btn-warning' : 'btn-success'}`}
-                          onClick={() => handleToggleAdminStatus(user.id, user.is_admin)}
-                        >
-                          {user.is_admin ? 'Revoke Admin' : 'Make Admin'}
-                        </button>
-                        <button
-                          className="btn btn-sm btn-danger"
-                          onClick={() => handleDeleteUser(user.id)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                users.map((user) => {
+                  const expired = isUserExpired(user);
+                  return (
+                    <tr key={user.id} className={expired ? 'expired-user' : ''}>
+                      <td>{user.email}</td>
+                      <td>
+                        <span className={`role-badge ${user.is_admin ? 'admin' : 'regular'}`}>
+                          {user.is_admin ? 'Admin' : 'User'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={expired ? 'expired-text' : ''}>
+                          {formatDateTime(user.expiry_time)}
+                        </span>
+                      </td>
+                      <td>
+                        {expired ? (
+                          <span className="status-badge expired">Expired</span>
+                        ) : user.expiry_time ? (
+                          <span className="status-badge active">Active</span>
+                        ) : (
+                          <span className="status-badge permanent">Permanent</span>
+                        )}
+                      </td>
+                      <td>{formatDate(user.created_at)}</td>
+                      <td>
+                        <div className="action-buttons">
+                          <button
+                            className="btn btn-sm btn-primary"
+                            onClick={() => {
+                              setResetPasswordUserId(user.id);
+                              setShowPasswordModal(true);
+                              setResetPasswordResult(null);
+                            }}
+                          >
+                            Reset Password
+                          </button>
+                          <button
+                            className="btn btn-sm btn-info"
+                            onClick={() => {
+                              setExpiryUserId(user.id);
+                              setShowExpiryModal(true);
+                              setExpiryResult(null);
+                              setExpiryMode('hours');
+                              setExpiryHours(720);
+                              setExpiryDate('');
+                            }}
+                          >
+                            Set Expiry
+                          </button>
+                          <button
+                            className={`btn btn-sm ${user.is_admin ? 'btn-warning' : 'btn-success'}`}
+                            onClick={() => handleToggleAdminStatus(user.id, user.is_admin)}
+                          >
+                            {user.is_admin ? 'Revoke Admin' : 'Make Admin'}
+                          </button>
+                          <button
+                            className="btn btn-sm btn-danger"
+                            onClick={() => handleDeleteUser(user.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -270,6 +369,97 @@ const UserManagement = () => {
                     Reset Password
                   </button>
                   <button className="btn btn-secondary" onClick={() => setShowPasswordModal(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Set Expiry Modal */}
+      {showExpiryModal && (
+        <div className="modal-overlay" onClick={() => {
+          setShowExpiryModal(false);
+          setExpiryResult(null);
+          setExpiryUserId(null);
+        }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Set User Account Expiry</h3>
+            {expiryResult ? (
+              expiryResult.success ? (
+                <div className="success-message">
+                  <p>User expiry set successfully!</p>
+                  <p className="code-info">
+                    Expiry: {formatDateTime(expiryResult.user.expiry_time)}
+                  </p>
+                </div>
+              ) : (
+                <div className="error-message">
+                  {expiryResult.error}
+                </div>
+              )
+            ) : (
+              <>
+                <div className="form-group">
+                  <label>Expiry Mode</label>
+                  <select
+                    value={expiryMode}
+                    onChange={(e) => setExpiryMode(e.target.value)}
+                    className="input"
+                  >
+                    <option value="hours">Set by Hours</option>
+                    <option value="date">Set by Date</option>
+                    <option value="remove">Remove Expiry (Permanent)</option>
+                  </select>
+                </div>
+
+                {expiryMode === 'hours' && (
+                  <div className="form-group">
+                    <label>Expiry Hours</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="87600"
+                      value={expiryHours}
+                      onChange={(e) => setExpiryHours(parseInt(e.target.value) || 720)}
+                      className="input"
+                    />
+                    <small>Hours from now until expiry (max 10 years / 87,600 hours)</small>
+                  </div>
+                )}
+
+                {expiryMode === 'date' && (
+                  <div className="form-group">
+                    <label>Expiry Date & Time</label>
+                    <input
+                      type="datetime-local"
+                      value={expiryDate}
+                      onChange={(e) => setExpiryDate(e.target.value)}
+                      className="input"
+                    />
+                    <small>Select the exact date and time when the account should expire</small>
+                  </div>
+                )}
+
+                {expiryMode === 'remove' && (
+                  <div className="form-group">
+                    <p className="code-note">
+                      This will remove the expiry time, giving the user permanent access to the application.
+                    </p>
+                  </div>
+                )}
+
+                <div className="modal-actions">
+                  <button className="btn btn-primary" onClick={handleSetExpiry}>
+                    {expiryMode === 'remove' ? 'Remove Expiry' : 'Set Expiry'}
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => {
+                    setShowExpiryModal(false);
+                    setExpiryResult(null);
+                    setExpiryUserId(null);
+                  }}>
                     Cancel
                   </button>
                 </div>

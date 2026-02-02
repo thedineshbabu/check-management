@@ -21,6 +21,10 @@ const RegistrationCodeManagement = () => {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [expiryHours, setExpiryHours] = useState(24);
   const [generatedCode, setGeneratedCode] = useState(null);
+  const [showExtendModal, setShowExtendModal] = useState(false);
+  const [extendCodeId, setExtendCodeId] = useState(null);
+  const [additionalHours, setAdditionalHours] = useState(24);
+  const [extendResult, setExtendResult] = useState(null);
 
   /**
    * Load registration codes from API
@@ -73,6 +77,39 @@ const RegistrationCodeManagement = () => {
     } catch (err) {
       logger.error('Error generating registration code:', err);
       setError(err.response?.data?.error || 'Failed to generate registration code');
+    }
+  };
+
+  /**
+   * Extend registration code expiry
+   * Extends the expiry time for a registration code
+   * @param {string} codeId - Registration code ID
+   */
+  const handleExtendExpiry = async () => {
+    try {
+      setError('');
+      logger.info(`Extending expiry for registration code: ${extendCodeId} by ${additionalHours} hours`);
+
+      const response = await adminAPI.extendCodeExpiry(extendCodeId, additionalHours);
+      setExtendResult({
+        success: true,
+        code: response.code
+      });
+      logger.info('Registration code expiry extended successfully');
+      
+      // Reload codes after extending
+      setTimeout(() => {
+        loadCodes();
+        setShowExtendModal(false);
+        setExtendResult(null);
+        setExtendCodeId(null);
+      }, 3000);
+    } catch (err) {
+      logger.error('Error extending registration code expiry:', err);
+      setExtendResult({
+        success: false,
+        error: err.response?.data?.error || 'Failed to extend registration code expiry'
+      });
     }
   };
 
@@ -251,11 +288,37 @@ const RegistrationCodeManagement = () => {
                       <td>
                         <div className="action-buttons">
                           {status === 'active' && (
+                            <>
+                              <button
+                                className="btn btn-sm btn-primary"
+                                onClick={() => {
+                                  setExtendCodeId(code.id);
+                                  setShowExtendModal(true);
+                                  setExtendResult(null);
+                                  setAdditionalHours(24);
+                                }}
+                              >
+                                Extend Expiry
+                              </button>
+                              <button
+                                className="btn btn-sm btn-warning"
+                                onClick={() => handleDeactivateCode(code.id)}
+                              >
+                                Deactivate
+                              </button>
+                            </>
+                          )}
+                          {(status === 'expired' || status === 'inactive') && !code.used_by && (
                             <button
-                              className="btn btn-sm btn-warning"
-                              onClick={() => handleDeactivateCode(code.id)}
+                              className="btn btn-sm btn-primary"
+                              onClick={() => {
+                                setExtendCodeId(code.id);
+                                setShowExtendModal(true);
+                                setExtendResult(null);
+                                setAdditionalHours(24);
+                              }}
                             >
-                              Deactivate
+                              Extend Expiry
                             </button>
                           )}
                           <button
@@ -312,6 +375,63 @@ const RegistrationCodeManagement = () => {
                     Generate Code
                   </button>
                   <button className="btn btn-secondary" onClick={() => setShowGenerateModal(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Extend Expiry Modal */}
+      {showExtendModal && (
+        <div className="modal-overlay" onClick={() => {
+          setShowExtendModal(false);
+          setExtendResult(null);
+          setExtendCodeId(null);
+        }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Extend Registration Code Expiry</h3>
+            {extendResult ? (
+              extendResult.success ? (
+                <div className="success-message">
+                  <p>Registration code expiry extended successfully!</p>
+                  <p className="code-info">
+                    New Expiry: {formatDate(extendResult.code.expiryTime)}
+                  </p>
+                  <p className="code-note">
+                    The code expiry has been extended. Users can now use this code until the new expiry time.
+                  </p>
+                </div>
+              ) : (
+                <div className="error-message">
+                  {extendResult.error}
+                </div>
+              )
+            ) : (
+              <>
+                <div className="form-group">
+                  <label>Additional Hours</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="8760"
+                    value={additionalHours}
+                    onChange={(e) => setAdditionalHours(parseInt(e.target.value) || 24)}
+                    className="input"
+                  />
+                  <small>Add this many hours to the current expiry time (or from now if expired)</small>
+                </div>
+                <div className="modal-actions">
+                  <button className="btn btn-primary" onClick={handleExtendExpiry}>
+                    Extend Expiry
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => {
+                    setShowExtendModal(false);
+                    setExtendResult(null);
+                    setExtendCodeId(null);
+                  }}>
                     Cancel
                   </button>
                 </div>

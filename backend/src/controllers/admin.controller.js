@@ -4,12 +4,13 @@
  * Manages user accounts, registration codes, and admin functions
  */
 
-import { getAllUsers, updateUserPassword, updateUserAdminStatus, deleteUser, findUserById } from '../models/user.model.js';
+import { getAllUsers, updateUserPassword, updateUserAdminStatus, updateUserExpiry, deleteUser, findUserById } from '../models/user.model.js';
 import { 
   createRegistrationCode, 
   getAllRegistrationCodes, 
   getRegistrationCodeById,
   deactivateRegistrationCode,
+  updateRegistrationCodeExpiry,
   deleteRegistrationCode 
 } from '../models/registration-code.model.js';
 import { hashPassword } from '../utils/password.js';
@@ -119,6 +120,65 @@ export const updateAdminStatus = async (req, res) => {
     });
   } catch (error) {
     logger.error('Error updating admin status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+/**
+ * Set user expiry time
+ * Sets or updates the expiry time for a user account
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export const setUserExpiry = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { expiryHours, expiryDate, removeExpiry } = req.body;
+    
+    logger.info(`Admin setting expiry for user: ${userId}`);
+    
+    // Validate user exists
+    const user = await findUserById(userId);
+    if (!user) {
+      logger.warn(`User not found for expiry update: ${userId}`);
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    let expiryTime = null;
+    
+    // If removeExpiry is true, set expiry to null (permanent access)
+    if (removeExpiry === true) {
+      expiryTime = null;
+    } else if (expiryDate) {
+      // Use provided expiry date
+      expiryTime = new Date(expiryDate);
+      if (isNaN(expiryTime.getTime())) {
+        return res.status(400).json({ error: 'Invalid expiry date format' });
+      }
+    } else if (expiryHours) {
+      // Calculate expiry from hours
+      const hours = parseInt(expiryHours);
+      if (isNaN(hours) || hours <= 0 || hours > 87600) { // Max 10 years
+        return res.status(400).json({ error: 'Expiry hours must be between 1 and 87600 (10 years)' });
+      }
+      
+      // Calculate expiry time from now
+      expiryTime = new Date();
+      expiryTime.setHours(expiryTime.getHours() + hours);
+    } else {
+      return res.status(400).json({ error: 'Either expiryHours, expiryDate, or removeExpiry must be provided' });
+    }
+    
+    // Update user expiry
+    const updatedUser = await updateUserExpiry(userId, expiryTime);
+    
+    logger.info(`User expiry updated successfully: ${userId}`);
+    res.json({
+      message: expiryTime ? 'User expiry set successfully' : 'User expiry removed (permanent access)',
+      user: updatedUser
+    });
+  } catch (error) {
+    logger.error('Error setting user expiry:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -234,6 +294,65 @@ export const getRegistrationCodes = async (req, res) => {
     res.json({ codes });
   } catch (error) {
     logger.error('Error fetching registration codes:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+/**
+ * Extend registration code expiry
+ * Extends the expiry time for a registration code
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+export const extendCodeExpiry = async (req, res) => {
+  try {
+    const { codeId } = req.params;
+    const { additionalHours } = req.body;
+    
+    logger.info(`Admin extending expiry for registration code: ${codeId} by ${additionalHours} hours`);
+    
+    // Validate additional hours
+    const hours = parseInt(additionalHours);
+    if (isNaN(hours) || hours <= 0 || hours > 8760) { // Max 1 year
+      return res.status(400).json({ error: 'Additional hours must be between 1 and 8760 (1 year)' });
+    }
+    
+    // Get current code to check expiry
+    const currentCode = await getRegistrationCodeById(codeId);
+    if (!currentCode) {
+      return res.status(404).json({ error: 'Registration code not found' });
+    }
+    
+    // Check if code is already used
+    if (currentCode.used_by) {
+      return res.status(400).json({ error: 'Cannot extend expiry for a code that has already been used' });
+    }
+    
+    // Calculate new expiry time (extend from current expiry or now, whichever is later)
+    const currentExpiry = new Date(currentCode.expiry_time);
+    const now = new Date();
+    const baseTime = currentExpiry > now ? currentExpiry : now;
+    const newExpiryTime = new Date(baseTime);
+    newExpiryTime.setHours(newExpiryTime.getHours() + hours);
+    
+    // Update expiry time
+    const updatedCode = await updateRegistrationCodeExpiry(codeId, newExpiryTime);
+    
+    if (!updatedCode) {
+      return res.status(400).json({ error: 'Failed to extend expiry. Code may have been used or deleted.' });
+    }
+    
+    logger.info(`Registration code expiry extended successfully: ${codeId}`);
+    res.json({
+      message: 'Registration code expiry extended successfully',
+      code: {
+        id: updatedCode.id,
+        code: updatedCode.code,
+        expiryTime: updatedCode.expiry_time
+      }
+    });
+  } catch (error) {
+    logger.error('Error extending registration code expiry:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

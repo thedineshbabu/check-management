@@ -319,6 +319,56 @@ export const deactivateRegistrationCode = async (codeId) => {
 };
 
 /**
+ * Update registration code expiry time
+ * Extends or updates the expiry time for a registration code
+ * @param {string} codeId - Registration code UUID
+ * @param {Date} newExpiryTime - New expiry timestamp
+ * @returns {Promise<Object>} Updated registration code object
+ */
+export const updateRegistrationCodeExpiry = async (codeId, newExpiryTime) => {
+  try {
+    logger.info(`Updating expiry time for registration code: ${codeId}`);
+    
+    // Check if code exists and is not already used
+    const existingCode = await query(
+      'SELECT id, used_by FROM registration_codes WHERE id = $1',
+      [codeId]
+    );
+    
+    if (existingCode.rows.length === 0) {
+      logger.warn(`Registration code not found for expiry update: ${codeId}`);
+      return null;
+    }
+    
+    // Don't allow extending expiry for already used codes
+    if (existingCode.rows[0].used_by) {
+      logger.warn(`Cannot extend expiry for used registration code: ${codeId}`);
+      return null;
+    }
+    
+    // Update expiry time
+    const result = await query(
+      `UPDATE registration_codes
+       SET expiry_time = $1
+       WHERE id = $2 AND used_by IS NULL
+       RETURNING id, code, expiry_time, created_by, used_by, used_at, is_active, created_at`,
+      [newExpiryTime, codeId]
+    );
+    
+    if (result.rows.length === 0) {
+      logger.warn(`Failed to update expiry for registration code: ${codeId}`);
+      return null;
+    }
+    
+    logger.info(`Registration code expiry updated successfully: ${codeId}`);
+    return result.rows[0];
+  } catch (error) {
+    logger.error('Error updating registration code expiry:', error);
+    throw error;
+  }
+};
+
+/**
  * Delete a registration code
  * Permanently removes a registration code from the database
  * @param {string} codeId - Registration code UUID

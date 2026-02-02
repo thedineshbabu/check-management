@@ -205,3 +205,84 @@
   margin-top: var(--spacing-sm);
 }
 
+.expired-user {
+  background: #fee2e2 !important;
+}
+
+.expired-text {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.status-badge.expired {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge.active {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge.permanent {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.btn-info {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-info:hover {
+  background: #2563eb;
+}
+
+.form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.form-group small {
+  display: block;
+  margin-top: var(--spacing-xs);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.code-info {
+  margin: var(--spacing-md) 0;
+  color: var(--text-secondary);
+}
+
+.code-note {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+

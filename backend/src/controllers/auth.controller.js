@@ -5,7 +5,7 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { findUserByEmail, createUser } from '../models/user.model.js';
+import { findUserByEmail, createUser, isUserExpired } from '../models/user.model.js';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 import { isValidEmail, isValidPassword, validateRequiredFields } from '../utils/validation.js';
 import { validateCode, validateAndUseCode } from '../models/registration-code.model.js';
@@ -52,6 +52,14 @@ export const login = async (req, res) => {
     if (!isPasswordValid) {
       logger.warn(`Login failed: invalid password for ${email}`);
       return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    
+    // Check if user account is expired
+    if (isUserExpired(user)) {
+      logger.warn(`Login failed: user account expired - ${email}`);
+      return res.status(403).json({ 
+        error: 'Your account has expired. Please contact an administrator.' 
+      });
     }
     
     // Generate JWT token with admin status

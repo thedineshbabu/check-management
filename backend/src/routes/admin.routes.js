@@ -11,9 +11,11 @@ import {
   getUsers,
   resetUserPassword,
   updateAdminStatus,
+  setUserExpiry,
   removeUser,
   generateRegistrationCode,
   getRegistrationCodes,
+  extendCodeExpiry,
   deactivateCode,
   removeRegistrationCode,
   getDashboardStats
@@ -53,6 +55,13 @@ router.post('/users/:userId/reset-password', resetUserPassword);
 router.put('/users/:userId/admin-status', updateAdminStatus);
 
 /**
+ * POST /api/admin/users/:userId/set-expiry
+ * Set user account expiry time
+ * Body: { expiryHours: number } OR { expiryDate: string (ISO) } OR { removeExpiry: true }
+ */
+router.post('/users/:userId/set-expiry', setUserExpiry);
+
+/**
  * DELETE /api/admin/users/:userId
  * Delete a user
  */
@@ -71,6 +80,13 @@ router.post('/registration-codes', generateRegistrationCode);
  * Query params: createdBy (UUID), isActive (boolean), used (boolean)
  */
 router.get('/registration-codes', getRegistrationCodes);
+
+/**
+ * POST /api/admin/registration-codes/:codeId/extend-expiry
+ * Extend registration code expiry time
+ * Body: { additionalHours: number }
+ */
+router.post('/registration-codes/:codeId/extend-expiry', extendCodeExpiry);
 
 /**
  * POST /api/admin/registration-codes/:codeId/deactivate

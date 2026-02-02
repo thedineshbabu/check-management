@@ -130,6 +130,17 @@ export const adminAPI = {
   },
 
   /**
+   * Set user expiry time
+   * @param {string} userId - User ID
+   * @param {Object} options - Expiry options { expiryHours, expiryDate, or removeExpiry }
+   * @returns {Promise} Updated user
+   */
+  setUserExpiry: async (userId, options) => {
+    const response = await api.post(`/admin/users/${userId}/set-expiry`, options);
+    return response.data;
+  },
+
+  /**
    * Delete user
    * @param {string} userId - User ID
    * @returns {Promise} Deletion confirmation
@@ -156,6 +167,17 @@ export const adminAPI = {
    */
   getRegistrationCodes: async (filters = {}) => {
     const response = await api.get('/admin/registration-codes', { params: filters });
+    return response.data;
+  },
+
+  /**
+   * Extend registration code expiry
+   * @param {string} codeId - Registration code ID
+   * @param {number} additionalHours - Hours to extend expiry by
+   * @returns {Promise} Extended code response
+   */
+  extendCodeExpiry: async (codeId, additionalHours) => {
+    const response = await api.post(`/admin/registration-codes/${codeId}/extend-expiry`, { additionalHours });
     return response.data;
   },
 
