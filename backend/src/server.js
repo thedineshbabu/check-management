@@ -23,12 +23,18 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 // Configure CORS with environment variable support for production
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || '*', // Allow all origins in development, specific origin in production
+  origin: function(origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    // Allow all origins for now (backend validates JWT)
+    return callback(null, true);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 app.use(cors(corsOptions)); // Enable CORS for frontend communication
+app.options('*', cors(corsOptions)); // Handle preflight requests
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded request bodies
 
