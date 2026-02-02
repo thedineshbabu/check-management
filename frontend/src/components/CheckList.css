@@ -1,0 +1,164 @@
+/**
+ * Check List Component Styles
+ * Styling for check list display
+ */
+
+.check-list {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.check-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.check-list-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.check-summary {
+  display: flex;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.summary-item {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-md);
+}
+
+.summary-item.incoming {
+  color: var(--success);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.summary-item.outgoing {
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.no-checks {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  color: var(--text-muted);
+}
+
+.check-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.check-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid;
+}
+
+.section-title.incoming {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.section-title.outgoing {
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.check-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.check-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border-left: 4px solid;
+  transition: all 0.2s ease;
+}
+
+.check-item.incoming {
+  border-left-color: var(--success);
+}
+
+.check-item.outgoing {
+  border-left-color: var(--error);
+}
+
+.check-item:hover {
+  background: var(--bg-secondary);
+  transform: translateX(4px);
+}
+
+.check-info {
+  flex: 1;
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.check-amount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  min-width: 120px;
+}
+
+.check-item.incoming .check-amount {
+  color: var(--success);
+}
+
+.check-item.outgoing .check-amount {
+  color: var(--error);
+}
+
+.check-details {
+  flex: 1;
+}
+
+.check-payer {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.check-account {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.check-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.btn-sm {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: 0.75rem;
+}
+

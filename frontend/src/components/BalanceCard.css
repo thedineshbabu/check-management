@@ -1,0 +1,141 @@
+/**
+ * Balance Card Component Styles
+ * Styling for balance display and warnings
+ */
+
+.balance-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.balance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.balance-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.balance-date {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.balance-overall {
+  text-align: center;
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.balance-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.balance-amount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.balance-amount.negative {
+  color: var(--error);
+}
+
+.balance-warning {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-md);
+  color: var(--warning);
+  margin-bottom: var(--spacing-lg);
+  font-size: 0.875rem;
+}
+
+.balance-accounts {
+  margin-top: var(--spacing-lg);
+}
+
+.balance-accounts h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.account-balance-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.account-balance-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.account-balance-item:hover {
+  border-color: var(--primary);
+}
+
+.account-balance-item.low-balance {
+  border-color: var(--warning);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.account-info {
+  flex: 1;
+}
+
+.account-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.account-number {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.account-balance {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.account-balance.negative {
+  color: var(--error);
+}
+
+.low-balance-indicator {
+  font-size: 1rem;
+}
+
