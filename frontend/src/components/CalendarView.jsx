@@ -169,10 +169,18 @@ const CalendarView = ({ selectedDate, viewMode, onDateSelect, dashboardData, mon
                 {hasAnyChecks && (
                   <div className="check-indicators">
                     {checkInfo.incoming && (
-                      <span className="check-dot incoming" title="Incoming check(s)">▼</span>
+                      <div className="check-indicator incoming" title="Incoming check(s)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 4L12 20M12 4L8 8M12 4L16 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
                     )}
                     {checkInfo.outgoing && (
-                      <span className="check-dot outgoing" title="Outgoing check(s)">▲</span>
+                      <div className="check-indicator outgoing" title="Outgoing check(s)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 20L12 4M12 20L8 16M12 20L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
                     )}
                   </div>
                 )}
@@ -185,10 +193,20 @@ const CalendarView = ({ selectedDate, viewMode, onDateSelect, dashboardData, mon
       {/* Legend */}
       <div className="calendar-legend">
         <span className="legend-item">
-          <span className="check-dot incoming">▼</span> Incoming
+          <div className="check-indicator incoming">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 4L12 20M12 4L8 8M12 4L16 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          Incoming
         </span>
         <span className="legend-item">
-          <span className="check-dot outgoing">▲</span> Outgoing
+          <div className="check-indicator outgoing">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 20L12 4M12 20L8 16M12 20L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          Outgoing
         </span>
       </div>
     </div>

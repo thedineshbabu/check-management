@@ -51,7 +51,8 @@
 }
 
 .dashboard-balance-section,
-.dashboard-checks-section {
+.dashboard-checks-section,
+.dashboard-cash-section {
   width: 100%;
 }
 

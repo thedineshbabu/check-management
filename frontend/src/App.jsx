@@ -12,6 +12,8 @@ import AdminProtectedRoute from './components/AdminProtectedRoute';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import AdminDashboard from './components/AdminDashboard';
+import RecurringTransactions from './components/RecurringTransactions';
+import Reports from './components/Reports';
 import logger from './utils/logger';
 
 /**
@@ -43,6 +45,22 @@ const AppRoutes = () => {
           <AdminProtectedRoute>
             <AdminDashboard />
           </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/recurring-transactions"
+        element={
+          <ProtectedRoute>
+            <RecurringTransactions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute>
+            <Reports />
+          </ProtectedRoute>
         }
       />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />

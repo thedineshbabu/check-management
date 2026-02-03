@@ -12,6 +12,7 @@ import { isValidDate } from '../utils/validation.js';
  * Calculate balance for a specific date
  * Computes account balances up to and including the specified date
  * Balance = sum of all incoming checks - sum of all outgoing checks (up to date)
+ * Also includes cash transactions: cash credit adds to balance, cash debit subtracts from balance
  * @param {string} userId - User UUID
  * @param {string} date - Target date (YYYY-MM-DD)
  * @returns {Promise<Object>} Balance data with overall and per-account balances
@@ -26,9 +27,22 @@ const calculateBalanceForDate = async (userId, date) => {
       [userId]
     );
     
+    // Get cash transactions up to date
+    const cashResult = await query(
+      `SELECT COALESCE(SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END), 0) as credit_total,
+              COALESCE(SUM(CASE WHEN type = 'debit' THEN amount ELSE 0 END), 0) as debit_total
+       FROM cash
+       WHERE user_id = $1 AND date <= $2`,
+      [userId, date]
+    );
+    
+    const cashCreditTotal = parseFloat(cashResult.rows[0].credit_total) || 0;
+    const cashDebitTotal = parseFloat(cashResult.rows[0].debit_total) || 0;
+    const cashNetBalance = cashCreditTotal - cashDebitTotal;
+    
     const accounts = accountsResult.rows;
     const accountBalances = [];
-    let overallBalance = 0;
+    let overallBalance = cashNetBalance; // Start with cash balance
     
     // Calculate balance for each account
     for (const account of accounts) {
@@ -71,12 +85,13 @@ const calculateBalanceForDate = async (userId, date) => {
       overallBalance += balance;
     }
     
-    logger.debug(`Balance calculated: overall=${overallBalance}, accounts=${accountBalances.length}`);
+    logger.debug(`Balance calculated: overall=${overallBalance}, accounts=${accountBalances.length}, cash_net=${cashNetBalance}`);
     
     return {
       date,
       overall_balance: overallBalance,
-      account_balances: accountBalances
+      account_balances: accountBalances,
+      cash_balance: cashNetBalance
     };
   } catch (error) {
     logger.error('Error calculating balance:', error);
@@ -109,6 +124,33 @@ const getChecksForDate = async (userId, date) => {
     return result.rows;
   } catch (error) {
     logger.error('Error fetching checks for date:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get cash transactions for a specific date
+ * Retrieves all cash transactions (credit and debit) for the specified date
+ * @param {string} userId - User UUID
+ * @param {string} date - Target date (YYYY-MM-DD)
+ * @returns {Promise<Array>} Array of cash transaction objects
+ */
+const getCashTransactionsForDate = async (userId, date) => {
+  try {
+    logger.debug(`Fetching cash transactions for user: ${userId}, date: ${date}`);
+    
+    const result = await query(
+      `SELECT id, user_id, type, amount, date, description, created_at, updated_at
+       FROM cash
+       WHERE user_id = $1 AND date = $2
+       ORDER BY type, created_at DESC`,
+      [userId, date]
+    );
+    
+    logger.debug(`Found ${result.rows.length} cash transactions for date: ${date}`);
+    return result.rows;
+  } catch (error) {
+    logger.error('Error fetching cash transactions for date:', error);
     throw error;
   }
 };
@@ -169,7 +211,7 @@ export const getChecks = async (req, res) => {
 
 /**
  * Get dashboard summary
- * Returns complete dashboard data including balance and checks for the date
+ * Returns complete dashboard data including balance, checks, and cash transactions for the date
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
@@ -186,19 +228,26 @@ export const getSummary = async (req, res) => {
       return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
     }
     
-    // Get balance and checks in parallel
-    const [balanceData, checks] = await Promise.all([
+    // Get balance, checks, and cash transactions in parallel
+    const [balanceData, checks, cashTransactions] = await Promise.all([
       calculateBalanceForDate(userId, date),
-      getChecksForDate(userId, date)
+      getChecksForDate(userId, date),
+      getCashTransactionsForDate(userId, date)
     ]);
     
     // Separate incoming and outgoing checks
     const incomingChecks = checks.filter(check => check.type === 'incoming');
     const outgoingChecks = checks.filter(check => check.type === 'outgoing');
     
+    // Separate credit and debit cash transactions
+    const creditCash = cashTransactions.filter(cash => cash.type === 'credit');
+    const debitCash = cashTransactions.filter(cash => cash.type === 'debit');
+    
     // Calculate totals for the day
     const incomingTotal = incomingChecks.reduce((sum, check) => sum + parseFloat(check.amount), 0);
     const outgoingTotal = outgoingChecks.reduce((sum, check) => sum + parseFloat(check.amount), 0);
+    const creditCashTotal = creditCash.reduce((sum, cash) => sum + parseFloat(cash.amount), 0);
+    const debitCashTotal = debitCash.reduce((sum, cash) => sum + parseFloat(cash.amount), 0);
     
     const summary = {
       date,
@@ -208,10 +257,17 @@ export const getSummary = async (req, res) => {
         outgoing: outgoingChecks,
         total: checks.length
       },
+      cash: {
+        credit: creditCash,
+        debit: debitCash,
+        total: cashTransactions.length
+      },
       daily_totals: {
         incoming: incomingTotal,
         outgoing: outgoingTotal,
-        net: incomingTotal - outgoingTotal
+        credit_cash: creditCashTotal,
+        debit_cash: debitCashTotal,
+        net: incomingTotal - outgoingTotal + creditCashTotal - debitCashTotal
       }
     };
     

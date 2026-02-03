@@ -325,6 +325,62 @@ export const checkAPI = {
 };
 
 /**
+ * Cash API
+ */
+export const cashAPI = {
+  /**
+   * Get cash transactions with optional filters
+   * @param {Object} filters - Filter options (date, type)
+   * @returns {Promise} Array of cash transactions
+   */
+  getAll: async (filters = {}) => {
+    const response = await api.get('/cash', { params: filters });
+    return response.data;
+  },
+
+  /**
+   * Get cash transaction by ID
+   * @param {string} id - Cash transaction ID
+   * @returns {Promise} Cash transaction object
+   */
+  getById: async (id) => {
+    const response = await api.get(`/cash/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Create new cash transaction
+   * @param {Object} cashData - Cash transaction data
+   * @returns {Promise} Created cash transaction
+   */
+  create: async (cashData) => {
+    const response = await api.post('/cash', cashData);
+    return response.data;
+  },
+
+  /**
+   * Update cash transaction
+   * @param {string} id - Cash transaction ID
+   * @param {Object} cashData - Updated cash transaction data
+   * @returns {Promise} Updated cash transaction
+   */
+  update: async (id, cashData) => {
+    const response = await api.put(`/cash/${id}`, cashData);
+    return response.data;
+  },
+
+  /**
+   * Delete cash transaction
+   * @param {string} id - Cash transaction ID
+   * @returns {Promise} Deletion confirmation
+   */
+  delete: async (id) => {
+    const response = await api.delete(`/cash/${id}`);
+    return response.data;
+  }
+};
+
+/**
  * Dashboard API
  */
 export const dashboardAPI = {
@@ -356,6 +412,132 @@ export const dashboardAPI = {
   getSummary: async (date) => {
     const response = await api.get('/dashboard/summary', { params: { date } });
     return response.data;
+  }
+};
+
+/**
+ * Recurring Transaction API
+ */
+export const recurringTransactionAPI = {
+  /**
+   * Get all recurring transactions with optional filters
+   * @param {Object} filters - Filter options (isActive, transactionType)
+   * @returns {Promise} Array of recurring transactions
+   */
+  getAll: async (filters = {}) => {
+    const response = await api.get('/recurring-transactions', { params: filters });
+    return response.data;
+  },
+
+  /**
+   * Get recurring transaction by ID
+   * @param {string} id - Recurring transaction ID
+   * @returns {Promise} Recurring transaction object
+   */
+  getById: async (id) => {
+    const response = await api.get(`/recurring-transactions/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Create new recurring transaction
+   * @param {Object} recurringData - Recurring transaction data
+   * @returns {Promise} Created recurring transaction
+   */
+  create: async (recurringData) => {
+    const response = await api.post('/recurring-transactions', recurringData);
+    return response.data;
+  },
+
+  /**
+   * Update recurring transaction
+   * @param {string} id - Recurring transaction ID
+   * @param {Object} recurringData - Updated recurring transaction data
+   * @returns {Promise} Updated recurring transaction
+   */
+  update: async (id, recurringData) => {
+    const response = await api.put(`/recurring-transactions/${id}`, recurringData);
+    return response.data;
+  },
+
+  /**
+   * Delete recurring transaction
+   * @param {string} id - Recurring transaction ID
+   * @returns {Promise} Deletion confirmation
+   */
+  delete: async (id) => {
+    const response = await api.delete(`/recurring-transactions/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Manually trigger creation of a transaction from recurring template
+   * @param {string} id - Recurring transaction ID
+   * @param {string} date - Optional date to create transaction for (YYYY-MM-DD)
+   * @returns {Promise} Created transaction and updated recurring transaction
+   */
+  trigger: async (id, date) => {
+    const response = await api.post(`/recurring-transactions/${id}/trigger`, { date });
+    return response.data;
+  }
+};
+
+/**
+ * Reports API
+ */
+export const reportAPI = {
+  /**
+   * Get financial summary (income vs expense) for a date range
+   * @param {string} startDate - Start date in YYYY-MM-DD format
+   * @param {string} endDate - End date in YYYY-MM-DD format
+   * @returns {Promise} Financial summary data
+   */
+  getFinancialSummary: async (startDate, endDate) => {
+    const response = await api.get('/reports/financial-summary', { params: { startDate, endDate } });
+    return response.data;
+  },
+
+  /**
+   * Get monthly income and expense trends
+   * @param {number} year - Optional year (default: current year)
+   * @param {number} months - Optional number of months (default: 12)
+   * @returns {Promise} Monthly trends data
+   */
+  getMonthlyTrends: async (year, months) => {
+    const response = await api.get('/reports/monthly-trends', { params: { year, months } });
+    return response.data;
+  },
+
+  /**
+   * Get account-wise performance metrics
+   * @param {string} accountId - Optional account ID
+   * @param {string} startDate - Optional start date
+   * @param {string} endDate - Optional end date
+   * @returns {Promise} Account performance data
+   */
+  getAccountPerformance: async (accountId, startDate, endDate) => {
+    const response = await api.get('/reports/account-performance', { params: { accountId, startDate, endDate } });
+    return response.data;
+  },
+
+  /**
+   * Export transactions to CSV or JSON
+   * @param {string} startDate - Start date in YYYY-MM-DD format
+   * @param {string} endDate - End date in YYYY-MM-DD format
+   * @param {string} format - Export format: 'csv' or 'json' (default: 'csv')
+   * @returns {Promise} Exported data or blob for CSV
+   */
+  exportTransactions: async (startDate, endDate, format = 'csv') => {
+    if (format === 'csv') {
+      const response = await api.get('/reports/export', { 
+        params: { startDate, endDate, format },
+        responseType: 'blob'
+      });
+      return response.data;
+    } else {
+      const response = await api.get('/reports/export', { params: { startDate, endDate, format } });
+      return response.data;
+    }
   }
 };
 

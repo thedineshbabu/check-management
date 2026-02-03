@@ -105,35 +105,80 @@
   font-weight: 500;
 }
 
-/* Check indicators container */
+/**
+ * Check indicators container
+ * Positions icons at bottom of calendar day
+ */
 .check-indicators {
-  display: flex;
-  gap: 2px;
   position: absolute;
-  bottom: 2px;
+  bottom: 4px;
   left: 50%;
   transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Individual check dots */
-.check-dot {
-  font-size: 0.5rem;
-  line-height: 1;
+/**
+ * Individual check indicator icon
+ * Modern SVG icons for incoming/outgoing checks
+ */
+.check-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  padding: 2px;
+  transition: all 0.2s ease;
 }
 
-.check-dot.incoming {
-  color: #10b981; /* Green for incoming/money in */
+/**
+ * Incoming check indicator (green/up arrow)
+ * Represents money coming in
+ */
+.check-indicator.incoming {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
 }
 
-.check-dot.outgoing {
-  color: #ef4444; /* Red for outgoing/money out */
+.calendar-day.selected .check-indicator.incoming {
+  color: #6ee7b7;
+  background: rgba(110, 231, 183, 0.2);
 }
 
-/* Adjust colors when day is selected */
-.calendar-day.selected .check-dot.incoming,
-.calendar-day.selected .check-dot.outgoing {
-  color: white;
-  opacity: 0.9;
+/**
+ * Outgoing check indicator (red/down arrow)
+ * Represents money going out
+ */
+.check-indicator.outgoing {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.calendar-day.selected .check-indicator.outgoing {
+  color: #fca5a5;
+  background: rgba(252, 165, 165, 0.2);
+}
+
+/**
+ * SVG icon styling
+ * Ensures icons are properly sized and visible
+ */
+.check-indicator svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/**
+ * Hover effect for check indicators
+ * Provides visual feedback on interaction
+ */
+.calendar-day:hover .check-indicator {
+  transform: scale(1.1);
 }
 
 /* Calendar legend */
@@ -154,8 +199,9 @@
   color: var(--text-muted);
 }
 
-.legend-item .check-dot {
-  font-size: 0.625rem;
+.legend-item .check-indicator {
+  width: 14px;
+  height: 14px;
 }
 
 /* Responsive adjustments */
@@ -172,8 +218,9 @@
     bottom: 1px;
   }
 
-  .check-dot {
-    font-size: 0.4rem;
+  .check-indicator {
+    width: 14px;
+    height: 14px;
   }
 
   .calendar-legend {

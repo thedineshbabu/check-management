@@ -1,0 +1,152 @@
+/**
+ * Cash List Component Styles
+ * Styling for cash transaction list display
+ */
+
+.cash-list {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.cash-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.cash-list-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cash-summary {
+  display: flex;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.summary-item {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-md);
+}
+
+.summary-item.credit {
+  color: var(--success);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.summary-item.debit {
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.no-cash {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  color: var(--text-muted);
+}
+
+.cash-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.cash-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid;
+}
+
+.section-title.credit {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.section-title.debit {
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.cash-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.cash-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border-left: 4px solid;
+  transition: all 0.2s ease;
+}
+
+.cash-item.credit {
+  border-left-color: var(--success);
+}
+
+.cash-item.debit {
+  border-left-color: var(--error);
+}
+
+.cash-item:hover {
+  background: var(--bg-secondary);
+  transform: translateX(4px);
+}
+
+.cash-info {
+  flex: 1;
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.cash-amount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  min-width: 120px;
+}
+
+.cash-item.credit .cash-amount {
+  color: var(--success);
+}
+
+.cash-item.debit .cash-amount {
+  color: var(--error);
+}
+
+.cash-details {
+  flex: 1;
+}
+
+.cash-description {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.cash-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}

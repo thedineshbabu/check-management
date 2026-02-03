@@ -11,8 +11,12 @@ import logger from './config/logger.js';
 import authRoutes from './routes/auth.routes.js';
 import accountRoutes from './routes/accounts.routes.js';
 import checkRoutes from './routes/checks.routes.js';
+import cashRoutes from './routes/cash.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import recurringTransactionRoutes from './routes/recurring-transactions.routes.js';
+import reportRoutes from './routes/reports.routes.js';
+import jobRoutes from './routes/jobs.routes.js';
 
 // Load environment variables
 dotenv.config();
@@ -57,8 +61,12 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/accounts', accountRoutes);
 app.use('/api/checks', checkRoutes);
+app.use('/api/cash', cashRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/recurring-transactions', recurringTransactionRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/jobs', jobRoutes);
 
 // 404 handler for undefined routes
 app.use((req, res) => {

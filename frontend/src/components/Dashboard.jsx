@@ -13,8 +13,10 @@ import logger from '../utils/logger';
 import CalendarView from './CalendarView';
 import BalanceCard from './BalanceCard';
 import CheckList from './CheckList';
+import CashList from './CashList';
 import AccountList from './AccountList';
 import CheckForm from './CheckForm';
+import CashForm from './CashForm';
 import ThemeToggle from './ThemeToggle';
 import './Dashboard.css';
 
@@ -31,6 +33,8 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showCheckForm, setShowCheckForm] = useState(false);
   const [editingCheck, setEditingCheck] = useState(null);
+  const [showCashForm, setShowCashForm] = useState(false);
+  const [editingCash, setEditingCash] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0); // Key to force re-render
   const [currentDateRange, setCurrentDateRange] = useState({ start: null, end: null });
   const { logout, user, isAdmin } = useAuth();
@@ -45,15 +49,15 @@ const Dashboard = () => {
       setLoading(true);
       const dateStr = format(date, 'yyyy-MM-dd');
       logger.info(`Loading dashboard data for date: ${dateStr}`);
-      
+
       // Load accounts first to ensure balance calculation uses latest account data
       const accountsData = await accountAPI.getAll();
       logger.info(`Loaded ${accountsData.length} accounts`);
-      
+
       // Then load summary which calculates balances using the latest account data
       const summary = await dashboardAPI.getSummary(dateStr);
       logger.info('Dashboard summary loaded with balance data');
-      
+
       // Update state with fresh data
       setAccounts(accountsData);
       setDashboardData(summary);
@@ -149,6 +153,34 @@ const Dashboard = () => {
   };
 
   /**
+   * Handle cash form submission
+   * Reloads dashboard data after cash transaction creation/update
+   */
+  const handleCashSubmit = () => {
+    setShowCashForm(false);
+    setEditingCash(null);
+    loadDashboardData(selectedDate);
+  };
+
+  /**
+   * Handle cash edit
+   * Opens form with cash transaction data for editing
+   * @param {Object} cash - Cash transaction object to edit
+   */
+  const handleEditCash = (cash) => {
+    setEditingCash(cash);
+    setShowCashForm(true);
+  };
+
+  /**
+   * Handle cash deletion
+   * Reloads dashboard data after deletion
+   */
+  const handleDeleteCash = () => {
+    loadDashboardData(selectedDate);
+  };
+
+  /**
    * Handle account refresh
    * Reloads dashboard data and accounts after account creation/update
    * This ensures balances are recalculated immediately
@@ -192,21 +224,33 @@ const Dashboard = () => {
         </div>
         <div className="dashboard-actions">
           <ThemeToggle />
+          <button
+            className="btn btn-secondary"
+            onClick={() => navigate('/recurring-transactions')}
+          >
+            Recurring Transactions
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={() => navigate('/reports')}
+          >
+            Reports & Analytics
+          </button>
           {isAdmin() && (
-            <button 
+            <button
               className="btn btn-primary"
               onClick={() => navigate('/admin')}
             >
               Admin Dashboard
             </button>
           )}
-          <button 
+          <button
             className="btn btn-secondary"
             onClick={() => setViewMode(viewMode === 'month' ? 'week' : 'month')}
           >
             {viewMode === 'month' ? 'Week View' : 'Month View'}
           </button>
-          <button 
+          <button
             className="btn btn-primary"
             onClick={() => {
               setEditingCheck(null);
@@ -215,7 +259,16 @@ const Dashboard = () => {
           >
             + New Check
           </button>
-          <button 
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              setEditingCash(null);
+              setShowCashForm(true);
+            }}
+          >
+            + New Cash
+          </button>
+          <button
             className="btn btn-secondary"
             onClick={handleLogout}
           >
@@ -236,7 +289,7 @@ const Dashboard = () => {
           />
 
           <div className="dashboard-balance-section">
-            <BalanceCard 
+            <BalanceCard
               balanceData={dashboardData?.balance}
               selectedDate={selectedDate}
             />
@@ -250,10 +303,19 @@ const Dashboard = () => {
               onDelete={handleDeleteCheck}
             />
           </div>
+
+          <div className="dashboard-cash-section">
+            <CashList
+              cash={dashboardData?.cash}
+              selectedDate={selectedDate}
+              onEdit={handleEditCash}
+              onDelete={handleDeleteCash}
+            />
+          </div>
         </div>
 
         <div className="dashboard-sidebar">
-          <AccountList 
+          <AccountList
             key={`account-list-${refreshKey}-${dashboardData?.date || 'default'}-${accounts.length}`}
             accounts={accounts}
             balanceData={dashboardData?.balance}
@@ -272,6 +334,18 @@ const Dashboard = () => {
             setEditingCheck(null);
           }}
           onSubmit={handleCheckSubmit}
+        />
+      )}
+
+      {showCashForm && (
+        <CashForm
+          defaultDate={selectedDate}
+          cash={editingCash}
+          onClose={() => {
+            setShowCashForm(false);
+            setEditingCash(null);
+          }}
+          onSubmit={handleCashSubmit}
         />
       )}
     </div>
