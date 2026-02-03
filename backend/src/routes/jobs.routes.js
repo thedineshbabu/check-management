@@ -6,7 +6,7 @@
 
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
-import { isAdmin } from '../middleware/admin.js';
+import { requireAdmin } from '../middleware/admin.js';
 import { runJob } from '../jobs/recurring-transactions.job.js';
 import logger from '../config/logger.js';
 
@@ -14,7 +14,7 @@ const router = express.Router();
 
 // All routes require authentication and admin privileges
 router.use(authenticateToken);
-router.use(isAdmin);
+router.use(requireAdmin);
 
 /**
  * POST /api/jobs/process-recurring-transactions
